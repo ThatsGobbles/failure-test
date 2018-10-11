@@ -45,18 +45,6 @@ impl From<Context<ErrorKind>> for Error {
     fn from(inner: Context<ErrorKind>) -> Error { Error { inner: inner } }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
-pub enum ErrorKindX {
-    #[fail(display = "XA1")]
-    XA1,
-    #[fail(display = "XA2")]
-    XA2,
-    #[fail(display = "XB1")]
-    XB1,
-    #[fail(display = "XB2")]
-    XB2,
-}
-
 pub fn example() {
     fn as_context(ek: ErrorKind) -> Result<(), Error> {
         use std::fs::File;
@@ -66,14 +54,24 @@ pub fn example() {
         Ok(())
     }
 
-    fn solo(ek: ErrorKind) -> Result<(), Error> {
-        Err(ek)?
-    }
-
     let eks = &[ErrorKind::A1, ErrorKind::A2, ErrorKind::B1, ErrorKind::B2];
 
     for ek in eks {
-        println!("{:?}", solo(*ek));
-        println!("{:?}", as_context(*ek));
+        println!("{}", ek);
+
+        let result = as_context(*ek);
+
+        if let Err(e) = result {
+            println!("{:?}", e.cause());
+
+            // Can't downcast our custom `Error`! Use `.kind` instead.
+            match e.kind() {
+                ErrorKind::A1 => println!("CRITICAL"),
+                _ => println!("WARNING"),
+            }
+        }
+        else {
+            println!("NORMAL");
+        }
     }
 }
