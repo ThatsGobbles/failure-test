@@ -46,32 +46,57 @@ impl From<Context<ErrorKind>> for Error {
 }
 
 pub fn example() {
-    fn as_context(ek: ErrorKind) -> Result<(), Error> {
+    fn as_context(ek_a: ErrorKind, ek_b: ErrorKind) -> Result<(), Error> {
         use std::fs::File;
 
-        File::open("DOES_NOT_EXIST").context(ek)?;
+        File::open("DOES_NOT_EXIST").context(ek_a).context(ek_b)?;
 
         Ok(())
     }
 
     let eks = &[ErrorKind::A1, ErrorKind::A2, ErrorKind::B1, ErrorKind::B2];
 
-    for ek in eks {
-        println!("{}", ek);
+    for ek_a in eks {
+        for ek_b in eks {
+            let result = as_context(*ek_a, *ek_b);
 
-        let result = as_context(*ek);
+            if let Err(e) = result {
+                println!("error: {}", e);
 
-        if let Err(e) = result {
-            println!("{:?}", e.cause());
+                // // Can't downcast our custom `Error`! Use `.kind` instead.
+                // match e.kind() {
+                //     ErrorKind::A1 => println!("Try to handle the error"),
+                //     _ => println!("Just fail"),
+                // }
 
-            // Can't downcast our custom `Error`! Use `.kind` instead.
-            match e.kind() {
-                ErrorKind::A1 => println!("CRITICAL"),
-                _ => println!("WARNING"),
+                let mut fail: &Fail = &e;
+
+                // // Get the chain of causes (which includes the cause of this error itself).
+                // let mut causes = fail.iter_chain();
+
+                // // Inspect the first two.
+                // let cause_a: &Fail = causes.next().unwrap();
+                // println!("cause a: {:?}", cause_a);
+                // let found_ek_a = cause_a.downcast_ref::<ErrorKind>();
+
+                // let cause_b: &Fail = causes.next().unwrap();
+                // println!("cause b: {:?}", cause_b);
+                // let found_ek_b = cause_b.downcast_ref::<ErrorKind>();
+
+                // match (found_ek_a, found_ek_b) {
+                //     (Some(ErrorKind::A2), Some(ErrorKind::B1)) => println!("HANDLE THE ERROR"),
+                //     (_, _) => println!("FAIL WITH MESSAGE"),
+                // }
+
+                // while let Some(cause) = fail.cause() {
+                //     println!("cause: {}", cause);
+                //     fail = cause;
+                // }
+
+                for ch in fail.iter_chain() {
+                    println!("chain item: {}", ch);
+                }
             }
-        }
-        else {
-            println!("NORMAL");
         }
     }
 }
