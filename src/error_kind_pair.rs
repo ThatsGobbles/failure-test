@@ -71,7 +71,7 @@ pub fn example() {
 
                 // Inspect the first two.
                 let found_ek_a = causes.next().and_then(|c| c.downcast_ref::<Error>()).map(|e| e.kind());
-                let found_ek_b = causes.next().and_then(|c| c.downcast_ref::<Error>()).map(|e| e.kind());
+                let found_ek_b = causes.next().and_then(|c| c.downcast_ref::<Context<ErrorKind>>()).map(|c| c.get_context());
 
                 match (found_ek_a, found_ek_b) {
                     (Some(ErrorKind::A2), Some(ErrorKind::B1)) => println!("HANDLE THE ERROR"),
